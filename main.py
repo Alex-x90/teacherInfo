@@ -1,20 +1,27 @@
 from requests import get
 from bs4 import BeautifulSoup
 import csv
+import re
 
-url="https://www.pps.net/Page/8591"
+
+url="https://hs.parkrose.k12.or.us/staff?query=parkrose%20high"
 htmlstring=get(url).text
 html=BeautifulSoup(htmlstring,"lxml")
-entries = html.find_all('tr', {'class':'sw-flex-row'})
-entries += html.find_all('tr', {'class':'sw-flex-alt-Row'})
-text = [e.get_text() for e in entries]
+for br in html.find_all("br"):
+    br.replace_with("\n")
+name = html.find_all('div', {'class':'staff_info'})
+emails=[]
+for x in name:
+    emails.append(x.find('a')['href'][7:])
+name = [e.get_text() for e in name]
 
 with open('teachers.csv', mode='w') as employee_file:
     employee_writer = csv.writer(employee_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-    for x in range(len(text)):
-        text[x]=text[x][1:-1].split("\n")
-        a,b=text[x][0].split(", ",1)
-        text[x][0]=b
-        text[x].insert(1,a)
-        employee_writer.writerow(text[x])
+    for x in range(len(name)):
+        name[x]=name[x].split("\n")
+        a,b=name[x][0].split(" ",1)
+        name[x][0]=a
+        name[x].insert(1,b)
+        name[x].append(emails[x])
+        employee_writer.writerow(name[x])
